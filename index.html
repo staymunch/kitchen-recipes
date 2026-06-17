@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<!-- Kitchen Recipes — build 2026-06-17a (async image extraction + iOS scroll fix) -->
 <title>Kitchen Recipes</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -42,11 +46,17 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', sans-serif;
-    overflow: hidden;
   }
+  body { overflow: hidden; }
 
   /* ── SCREENS ── */
-  .screen { display: none; height: 100vh; flex-direction: column; }
+  .screen {
+    display: none;
+    height: 100vh;        /* fallback for older browsers */
+    height: 100dvh;       /* dynamic viewport height — accounts for iOS toolbars */
+    flex-direction: column;
+    min-height: 0;
+  }
   .screen.active { display: flex; }
 
   /* ── NAV BAR ── */
@@ -131,7 +141,9 @@
 
   .recipe-grid {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 20px 24px;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -213,7 +225,9 @@
 
   .detail-body {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 28px 32px;
   }
   .detail-body::-webkit-scrollbar { width: 4px; }
@@ -328,7 +342,9 @@
 
   .admin-body {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 28px 32px;
     max-width: 720px;
     width: 100%;
@@ -514,11 +530,13 @@
 
   .slide-body {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     padding: 40px 60px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     position: relative;
   }
 
@@ -970,6 +988,7 @@
 
 <!-- HIDDEN PDF INPUT -->
 <input type="file" id="pdf-input" accept="application/pdf" style="display:none" />
+<input type="file" id="image-input" accept="image/*" style="display:none" />
 
 <script>
 // ── DATA STORE (IndexedDB) ──
@@ -1573,11 +1592,14 @@ function showAddForm(id) {
     </div>
     <div class="divider-or">OR ENTER MANUALLY</div>
     ` : ''}
-    <div class="form-group" id="image-group" style="${formImage ? '' : 'display:none'}">
+    <div class="form-group">
       <label class="form-label">Dish Photo</label>
       <div class="img-preview-row">
-        <img class="img-preview" id="img-preview" src="${formImage || ''}" alt="dish" />
-        <button class="img-clear-btn" onclick="clearFormImage()">Remove photo</button>
+        <img class="img-preview" id="img-preview" src="${formImage || ''}" alt="dish" style="${formImage ? '' : 'display:none'}" />
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="img-clear-btn" onclick="document.getElementById('image-input').click()">${formImage ? 'Replace photo' : 'Upload photo'}</button>
+          ${formImage ? `<button class="img-clear-btn" onclick="clearFormImage()">Remove photo</button>` : ''}
+        </div>
       </div>
     </div>
     <div class="form-group">
@@ -1632,14 +1654,28 @@ function escAttr(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;'
 
 function clearFormImage() {
   formImage = null;
-  document.getElementById('image-group').style.display = 'none';
+  updatePhotoControls();
 }
 function refreshImagePreview() {
-  const group = document.getElementById('image-group');
+  updatePhotoControls();
+}
+// Update the dish-photo preview and button labels in place, without
+// re-rendering the whole form (so typed-in fields aren't lost).
+function updatePhotoControls() {
   const img = document.getElementById('img-preview');
-  if (formImage && group && img) {
+  if (!img) return;
+  const btnWrap = img.parentElement.querySelector('div');
+  if (formImage) {
     img.src = formImage;
-    group.style.display = '';
+    img.style.display = '';
+    btnWrap.innerHTML =
+      `<button class="img-clear-btn" onclick="document.getElementById('image-input').click()">Replace photo</button>` +
+      `<button class="img-clear-btn" onclick="clearFormImage()">Remove photo</button>`;
+  } else {
+    img.removeAttribute('src');
+    img.style.display = 'none';
+    btnWrap.innerHTML =
+      `<button class="img-clear-btn" onclick="document.getElementById('image-input').click()">Upload photo</button>`;
   }
 }
 
@@ -1720,6 +1756,44 @@ function saveRecipe() {
   }
   showToast(editingId ? 'Recipe updated!' : 'Recipe added!');
   renderAdmin();
+}
+
+// ── DIRECT IMAGE UPLOAD ──
+// Lets the chef set or replace a dish photo on any recipe (new or existing)
+// without re-importing the PDF. Downscales large photos before storing.
+document.getElementById('image-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+  try {
+    const dataUrl = await downscaleImageFile(file, 1000, 0.85);
+    formImage = dataUrl;
+    updatePhotoControls();
+  } catch (err) {
+    console.error(err);
+    alert('Could not load that image. Try a JPG or PNG.');
+  }
+});
+
+function downscaleImageFile(file, maxW, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = img.width > maxW ? maxW / img.width : 1;
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 // ── PDF IMPORT ──
