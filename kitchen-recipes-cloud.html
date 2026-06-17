@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Recipes" />
+<meta name="theme-color" content="#f1ece1" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<!-- Kitchen Recipes — build 2026-06-17a (async image extraction + iOS scroll fix) -->
+<title>Kitchen Recipes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="icon" href="favicon.png" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ════════════════════════════════════════════════════════════════
+  //  SETUP — paste your two Supabase values here, then save the file.
+  //  Find them in your Supabase project: Settings → API
+  //    1. Project URL   (looks like https://abcdxyz.supabase.co)
+  //    2. anon public key (a long string starting with "eyJ...")
+  //  Until these are filled in, the app runs in OFFLINE-ONLY mode
+  //  using the device's local storage (same as the non-cloud version).
+  // ════════════════════════════════════════════════════════════════
+  const SUPABASE_URL = 'https://tygbkbyojjbhozfqmifo.supabase.co';   // <-- paste Project URL between the quotes
+  const SUPABASE_ANON_KEY = 'sb_publishable__K2JG93rhY9NdchhVmW98w_TtOUtT8C'; // <-- paste anon public key between the quotes
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg:#f1ece1;
+    --surface:#fbf8f1;
+    --surface2:#f1ebdd;
+    --glass:rgba(251,248,241,0.72);
+    --border:rgba(40,33,24,0.10);
+    --border-2:rgba(40,33,24,0.06);
+    --gold:#516238;            /* primary accent: herb / olive */
+    --gold-dim:#6a7a4c;
+    --gold-press:#3f4d2b;
+    --gold-soft:rgba(81,98,56,0.12);
+    --cream:#241f18;           /* heading ink */
+    --ink-soft:#615847;
+    --muted:#8a8073;
+    --text:#2a241c;
+    --brass:#9c7c40;
+    --red:#b23b27;
+    --green:#3a7d44;
+    --radius:22px;
+    --r-sm:14px;
+    --r-xl:28px;
+    --r-pill:999px;
+    --serif:'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --sans:-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', sans-serif;
+    --shadow-sm:0 1px 2px rgba(40,33,24,0.05), 0 4px 14px rgba(40,33,24,0.06);
+    --shadow-md:0 4px 16px rgba(40,33,24,0.08), 0 18px 44px rgba(40,33,24,0.10);
+    --shadow-lg:0 12px 50px rgba(40,33,24,0.18);
+    --safe-top:env(safe-area-inset-top, 0px);
+    --safe-bot:env(safe-area-inset-bottom, 0px);
+  }
+
+  html, body { min-height:100%; background:var(--bg); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+  body {
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    background:
+      radial-gradient(1200px 620px at 82% -8%, rgba(156,124,64,0.10), transparent 60%),
+      radial-gradient(1000px 720px at -12% 112%, rgba(81,98,56,0.09), transparent 55%),
+      var(--bg);
+    background-attachment:fixed;
+  }
+  svg { flex:none; }
+
+  /* SCREENS */
+  .screen { display:none; min-height:100vh; min-height:100dvh; flex-direction:column; }
+  .screen.active { display:flex; animation:screenIn .34s cubic-bezier(.2,.8,.2,1); }
+  @keyframes screenIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
+  #slideshow-screen.active { height:100dvh; overflow:hidden; position:relative; animation:none; }
+
+  /* TOP NAV (frosted glass) */
+  .nav {
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:14px 22px; padding-top:calc(14px + var(--safe-top));
+    background:var(--glass);
+    backdrop-filter:blur(26px) saturate(1.7);
+    -webkit-backdrop-filter:blur(26px) saturate(1.7);
+    border-bottom:1px solid var(--border-2);
+    position:sticky; top:0; z-index:50; flex-shrink:0;
+  }
+  .nav-title { font-family:var(--serif); font-size:27px; font-weight:600; color:var(--cream); letter-spacing:0.3px; line-height:1; }
+  .nav-sub { font-size:12.5px; color:var(--muted); margin-top:6px; letter-spacing:0.2px; }
+  .nav-btn {
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--surface); border:1px solid var(--border); color:var(--text);
+    border-radius:var(--r-pill); padding:0 18px; height:44px;
+    font-size:15px; font-weight:500; font-family:var(--sans);
+    cursor:pointer; white-space:nowrap; box-shadow:var(--shadow-sm);
+    transition:transform .12s ease, background .15s, border-color .15s;
+  }
+  .nav-btn svg { width:18px; height:18px; }
+  .nav-btn:active { transform:scale(0.96); }
+  @media(hover:hover){ .nav-btn:hover { border-color:var(--gold-dim); } }
+  .nav-btn.primary { background:var(--gold); color:#fff; border-color:transparent; box-shadow:0 4px 14px rgba(81,98,56,0.32); }
+  .nav-btn.primary:active { background:var(--gold-press); }
+
+  /* SEARCH */
+  .search-bar { padding:16px 22px 6px; }
+  .search-wrap { position:relative; }
+  .search-ic { position:absolute; left:18px; top:50%; transform:translateY(-50%); width:20px; height:20px; color:var(--muted); pointer-events:none; }
+  .search-input {
+    width:100%; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r-pill); padding:14px 20px 14px 48px; color:var(--text);
+    font-size:16px; font-family:var(--sans); outline:none; box-shadow:var(--shadow-sm);
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .search-input::placeholder { color:var(--muted); }
+  .search-input:focus { border-color:var(--gold-dim); box-shadow:0 0 0 4px var(--gold-soft); }
+
+  /* CATEGORY CHIPS */
+  .filter-row { display:flex; gap:8px; padding:12px 22px 14px; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0; }
+  .filter-row::-webkit-scrollbar { display:none; }
+  .tag-btn {
+    white-space:nowrap; background:var(--surface); border:1px solid var(--border); color:var(--muted);
+    border-radius:var(--r-pill); padding:0 16px; height:38px; font-size:14px; font-weight:500;
+    font-family:var(--sans); cursor:pointer; display:inline-flex; align-items:center;
+    box-shadow:var(--shadow-sm); transition:transform .12s, background .15s, color .15s;
+  }
+  .tag-btn:active { transform:scale(0.95); }
+  .tag-btn.active { background:var(--gold); color:#fff; border-color:transparent; box-shadow:0 3px 10px rgba(81,98,56,0.28); }
+
+  /* RECIPE GRID */
+  .recipe-grid {
+    flex:1 0 auto; padding:8px 22px calc(48px + var(--safe-bot));
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:18px; align-content:start;
+  }
+  .recipe-card {
+    background:var(--surface); border:1px solid var(--border-2); border-radius:var(--radius);
+    cursor:pointer; overflow:hidden; box-shadow:var(--shadow-sm); position:relative;
+    transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s;
+  }
+  .recipe-card:active { transform:scale(0.985); }
+  @media(hover:hover){ .recipe-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); } }
+  .card-image { width:100%; height:176px; object-fit:cover; display:block; background:var(--surface2); }
+  .card-image-empty { display:flex; align-items:center; justify-content:center; color:var(--gold); background:linear-gradient(135deg, var(--surface2), #ece3d1); }
+  .card-image-empty svg { width:42px; height:42px; opacity:.45; }
+  .card-pad { padding:16px 18px 18px; }
+  .card-category { font-size:11px; font-weight:600; letter-spacing:1.4px; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
+  .card-title { font-family:var(--serif); font-size:25px; font-weight:600; color:var(--cream); margin-bottom:8px; line-height:1.12; }
+  .card-desc { font-size:14px; color:var(--muted); line-height:1.55; margin-bottom:14px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .card-meta { display:flex; flex-wrap:wrap; gap:14px; font-size:13px; color:var(--ink-soft); }
+  .card-meta span { display:inline-flex; align-items:center; gap:6px; }
+  .card-meta svg { width:15px; height:15px; color:var(--gold-dim); }
+
+  .empty-state { grid-column:1 / -1; text-align:center; padding:90px 20px; color:var(--muted); }
+  .empty-icon { color:var(--gold); margin-bottom:18px; display:flex; justify-content:center; opacity:.55; }
+  .empty-icon svg { width:52px; height:52px; }
+  .empty-title { font-family:var(--serif); font-size:28px; font-weight:600; color:var(--cream); margin-bottom:8px; }
+  .empty-sub { font-size:15px; line-height:1.6; }
+
+  /* RECIPE DETAIL */
+  .detail-body { flex:1 0 auto; padding:24px 22px calc(60px + var(--safe-bot)); max-width:880px; width:100%; margin:0 auto; }
+  .detail-image { width:100%; height:340px; object-fit:cover; border-radius:var(--radius); margin-bottom:26px; background:var(--surface2); box-shadow:var(--shadow-sm); }
+  .detail-category { font-size:12px; font-weight:600; letter-spacing:1.6px; text-transform:uppercase; color:var(--gold); margin-bottom:12px; }
+  .detail-title { font-family:var(--serif); font-size:clamp(34px,5vw,48px); font-weight:600; color:var(--cream); margin-bottom:14px; line-height:1.06; letter-spacing:-.5px; }
+  .detail-desc { font-size:17px; color:var(--ink-soft); line-height:1.7; margin-bottom:24px; max-width:700px; }
+  .detail-meta-row { display:flex; gap:12px; margin-bottom:30px; flex-wrap:wrap; }
+  .meta-chip { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-sm); padding:10px 16px; font-size:15px; color:var(--text); box-shadow:var(--shadow-sm); min-width:86px; }
+  .meta-chip strong { color:var(--gold); font-size:11px; display:block; letter-spacing:1px; text-transform:uppercase; margin-bottom:3px; font-weight:600; }
+  .detail-divider { border:none; border-top:1px solid var(--border); margin:28px 0; }
+  .section-label { font-size:12px; font-weight:600; letter-spacing:1.6px; text-transform:uppercase; color:var(--gold-dim); margin-bottom:16px; }
+  .ingredients-list { list-style:none; margin-bottom:8px; }
+  .ingredients-list li { display:flex; align-items:baseline; gap:14px; padding:13px 2px; border-bottom:1px solid var(--border-2); font-size:16px; line-height:1.4; }
+  .ingredients-list li:last-child { border-bottom:none; }
+  .ing-amount { color:var(--gold); font-weight:600; min-width:92px; font-size:15px; font-variant-numeric:tabular-nums; }
+  .steps-list { list-style:none; }
+  .step { display:flex; gap:18px; margin-bottom:22px; }
+  .step-num { width:34px; height:34px; border-radius:50%; background:var(--gold-soft); color:var(--gold); font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; font-variant-numeric:tabular-nums; }
+  .step-text { font-size:16px; line-height:1.7; color:var(--text); padding-top:5px; }
+  .notes-box { background:var(--gold-soft); border:1px solid rgba(81,98,56,0.22); border-radius:var(--radius); padding:20px 22px; font-size:15px; line-height:1.7; color:var(--ink-soft); margin-top:28px; }
+  .notes-box strong { color:var(--gold); display:block; margin-bottom:8px; font-size:12px; letter-spacing:1.2px; text-transform:uppercase; font-weight:600; }
+
+  /* ADMIN */
+  .admin-body { flex:1 0 auto; padding:24px 22px calc(60px + var(--safe-bot)); max-width:760px; width:100%; margin:0 auto; }
+  .admin-section-title { font-family:var(--serif); font-size:30px; font-weight:600; color:var(--cream); margin-bottom:22px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+  .form-group { margin-bottom:20px; }
+  .form-label { display:block; font-size:12px; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; color:var(--muted); margin-bottom:9px; }
+  .form-input, .form-textarea, .form-select {
+    width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-sm);
+    padding:14px 16px; color:var(--text); font-size:16px; font-family:var(--sans); outline:none;
+    box-shadow:var(--shadow-sm); transition:border-color .15s, box-shadow .15s;
+  }
+  .form-input::placeholder, .form-textarea::placeholder { color:var(--muted); }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color:var(--gold-dim); box-shadow:0 0 0 4px var(--gold-soft); }
+  .form-textarea { resize:vertical; min-height:84px; line-height:1.6; }
+  .form-select { appearance:none; cursor:pointer; }
+  .form-select option { background:#fff; color:var(--text); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  @media(max-width:620px){ .form-row { grid-template-columns:1fr; } }
+  .ing-row { display:grid; grid-template-columns:120px 1fr 44px; gap:8px; margin-bottom:8px; align-items:center; }
+  .remove-btn { background:var(--surface); border:1px solid var(--border); color:var(--muted); border-radius:12px; width:44px; height:44px; cursor:pointer; font-size:20px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+  .remove-btn:active { transform:scale(0.92); }
+  @media(hover:hover){ .remove-btn:hover { border-color:var(--red); color:var(--red); } }
+  .add-btn { background:var(--gold-soft); border:1px dashed rgba(81,98,56,0.4); color:var(--gold); border-radius:var(--r-sm); padding:14px; width:100%; cursor:pointer; font-size:14px; font-weight:500; font-family:var(--sans); margin-top:8px; transition:all .15s; }
+  .add-btn:active { transform:scale(0.99); }
+  .step-row { display:grid; grid-template-columns:1fr 44px; gap:8px; margin-bottom:8px; align-items:start; }
+  .form-actions { display:flex; gap:12px; margin-top:28px; padding-top:22px; border-top:1px solid var(--border); flex-wrap:wrap; }
+  .btn { border-radius:var(--r-pill); padding:0 26px; height:50px; font-size:16px; font-family:var(--sans); font-weight:600; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:8px; transition:transform .12s, background .15s; }
+  .btn svg { width:18px; height:18px; }
+  .btn:active { transform:scale(0.97); }
+  .btn-primary { background:var(--gold); color:#fff; box-shadow:0 4px 14px rgba(81,98,56,0.32); }
+  .btn-primary:active { background:var(--gold-press); }
+  .btn-secondary { background:var(--surface); color:var(--text); border:1px solid var(--border); box-shadow:var(--shadow-sm); }
+  .btn-danger { background:transparent; color:var(--red); border:1px solid rgba(178,59,39,0.32); }
+  .recipe-list-admin { list-style:none; margin-bottom:28px; }
+  .recipe-list-item { display:flex; align-items:center; justify-content:space-between; padding:16px 0; border-bottom:1px solid var(--border-2); gap:12px; }
+  .recipe-list-item:last-child { border-bottom:none; }
+  .rli-info { flex:1; }
+  .rli-title { font-size:17px; color:var(--text); font-weight:500; }
+  .rli-cat { font-size:13px; color:var(--muted); margin-top:3px; }
+  .rli-actions { display:flex; gap:8px; }
+  .icon-btn { display:inline-flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:var(--r-pill); padding:0 16px; height:40px; cursor:pointer; font-size:14px; font-weight:500; font-family:var(--sans); box-shadow:var(--shadow-sm); transition:all .15s; }
+  .icon-btn svg { width:15px; height:15px; }
+  .icon-btn:active { transform:scale(0.95); }
+  .icon-btn.del { color:var(--red); }
+  @media(hover:hover){ .icon-btn.del:hover { border-color:var(--red); } }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:calc(34px + var(--safe-bot)); left:50%; transform:translateX(-50%) translateY(20px); background:var(--cream); color:#f3efe6; padding:14px 26px; border-radius:var(--r-pill); font-size:15px; font-weight:500; opacity:0; transition:all .3s cubic-bezier(.2,.8,.2,1); pointer-events:none; z-index:999; box-shadow:var(--shadow-lg); }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ── PRESENT MODE ── */
+  .icon-round { width:46px; height:46px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:var(--glass); backdrop-filter:blur(20px) saturate(1.6); -webkit-backdrop-filter:blur(20px) saturate(1.6); border:1px solid var(--border-2); color:var(--text); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .12s, background .15s; }
+  .icon-round svg { width:21px; height:21px; }
+  .icon-round:active { transform:scale(0.92); }
+  .present-topbar {
+    position:absolute; top:0; left:0; right:0; z-index:20;
+    display:flex; align-items:center; gap:14px;
+    padding:calc(16px + var(--safe-top)) 24px 14px;
+  }
+  .present-title { flex:1; font-family:var(--serif); font-size:23px; font-weight:600; color:var(--cream); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .present-count { min-width:46px; text-align:right; font-size:14px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .present-tap { position:absolute; top:84px; bottom:108px; width:11%; max-width:130px; background:transparent; border:none; cursor:pointer; z-index:15; }
+  .present-tap.left { left:0; } .present-tap.right { right:0; }
+  .slide-body {
+    position:absolute; inset:0;
+    padding:calc(86px + var(--safe-top)) 7% calc(116px + var(--safe-bot));
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .present-controls {
+    position:absolute; left:50%; transform:translateX(-50%); bottom:calc(22px + var(--safe-bot)); z-index:25;
+    display:flex; align-items:center; gap:6px;
+    background:var(--glass); backdrop-filter:blur(26px) saturate(1.7); -webkit-backdrop-filter:blur(26px) saturate(1.7);
+    border:1px solid var(--border-2); border-radius:var(--r-pill); padding:8px; box-shadow:var(--shadow-md);
+  }
+  .present-nav-btn { display:inline-flex; align-items:center; gap:6px; height:46px; padding:0 18px; border-radius:var(--r-pill); border:none; background:transparent; color:var(--text); font-size:15px; font-weight:500; font-family:var(--sans); cursor:pointer; transition:transform .12s, background .15s; }
+  .present-nav-btn svg { width:18px; height:18px; }
+  .present-nav-btn:disabled { opacity:.3; cursor:default; }
+  .present-nav-btn:active:not(:disabled) { transform:scale(0.95); }
+  .present-nav-btn.primary { background:var(--gold); color:#fff; padding:0 22px; box-shadow:0 3px 12px rgba(81,98,56,0.32); }
+  .present-nav-btn.primary:active { background:var(--gold-press); }
+  .slide-dots { display:flex; gap:7px; align-items:center; padding:0 10px; }
+  .slide-dot { width:7px; height:7px; border-radius:50%; background:var(--border); transition:all .25s cubic-bezier(.2,.8,.2,1); }
+  .slide-dot.active { background:var(--gold); width:22px; border-radius:4px; }
+  .slide-category { font-size:13px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:14px; }
+  .slide-main-title { font-family:var(--serif); font-size:clamp(40px,6vw,68px); font-weight:600; color:var(--cream); line-height:1.04; margin-bottom:18px; letter-spacing:-.5px; }
+  .slide-desc { font-size:clamp(16px,1.9vw,20px); color:var(--ink-soft); line-height:1.6; max-width:640px; margin-bottom:28px; }
+  .slide-image { width:100%; height:auto; max-height:64vh; object-fit:cover; border-radius:var(--radius); background:var(--surface2); box-shadow:var(--shadow-md); }
+  .slide-two-col { display:grid; grid-template-columns:1fr 1.4fr; gap:40px; }
+  .slide-ing-list { list-style:none; columns:2; column-gap:52px; max-width:1000px; }
+  @media(max-width:760px){ .slide-ing-list { columns:1; } }
+  .slide-ing-list li { display:flex; gap:14px; padding:13px 0; border-bottom:1px solid var(--border-2); font-size:clamp(16px,1.7vw,19px); break-inside:avoid; }
+  .slide-ing-amount { color:var(--gold); font-weight:600; min-width:96px; font-variant-numeric:tabular-nums; }
+  .slide-steps-list { list-style:none; max-width:900px; }
+  .slide-step { display:flex; gap:20px; margin-bottom:24px; }
+  .slide-step-num { width:38px; height:38px; border-radius:50%; background:var(--gold-soft); color:var(--gold); font-weight:600; font-size:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-variant-numeric:tabular-nums; }
+  .slide-step-text { font-size:clamp(16px,1.8vw,21px); line-height:1.55; color:var(--text); padding-top:5px; }
+  .slide-notes { background:var(--gold-soft); border:1px solid rgba(81,98,56,0.22); border-radius:var(--radius); padding:22px 26px; font-size:clamp(16px,1.7vw,19px); line-height:1.65; color:var(--ink-soft); max-width:760px; }
+  .slide-notes strong { color:var(--gold); font-size:12px; letter-spacing:1.4px; text-transform:uppercase; display:block; margin-bottom:8px; font-weight:600; }
+
+  /* MODALS */
+  .modal-overlay { position:fixed; inset:0; background:rgba(36,31,24,0.4); display:none; align-items:center; justify-content:center; z-index:1000; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); padding:20px; }
+  .modal-overlay.show { display:flex; }
+  .pin-modal, .auth-modal { background:var(--surface); border:1px solid var(--border-2); border-radius:var(--r-xl); padding:34px 36px; box-shadow:var(--shadow-lg); }
+  .pin-modal { text-align:center; width:340px; max-width:90vw; }
+  .pin-title, .auth-title { font-family:var(--serif); font-size:28px; font-weight:600; color:var(--cream); margin-bottom:6px; }
+  .auth-title { text-align:center; }
+  .pin-sub, .auth-sub { font-size:14px; color:var(--muted); margin-bottom:26px; line-height:1.5; }
+  .auth-sub { text-align:center; }
+  .pin-dots { display:flex; gap:16px; justify-content:center; margin-bottom:30px; }
+  .pin-dot-input { width:15px; height:15px; border-radius:50%; border:1.5px solid var(--gold-dim); transition:all .15s; }
+  .pin-dot-input.filled { background:var(--gold); border-color:var(--gold); }
+  .pin-dot-input.error { border-color:var(--red); background:var(--red); }
+  .pin-pad { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
+  .pin-key { background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:var(--r-sm); padding:18px 0; font-size:24px; font-family:var(--sans); font-weight:500; cursor:pointer; transition:all .1s; }
+  .pin-key:active { background:var(--gold); color:#fff; transform:scale(0.96); }
+  .pin-key.blank { background:none; border:none; cursor:default; }
+  .pin-cancel { margin-top:22px; background:none; border:none; color:var(--muted); font-size:15px; font-family:var(--sans); cursor:pointer; padding:8px; }
+  .pin-cancel:hover { color:var(--gold); }
+  .auth-modal { width:400px; max-width:90vw; }
+  .auth-field { margin-bottom:16px; }
+  .auth-field label { display:block; font-size:12px; letter-spacing:0.8px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; font-weight:600; }
+  .auth-field input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:var(--r-sm); padding:14px 16px; color:var(--text); font-size:16px; font-family:var(--sans); outline:none; transition:border-color .15s, box-shadow .15s; }
+  .auth-field input:focus { border-color:var(--gold-dim); box-shadow:0 0 0 4px var(--gold-soft); }
+  .auth-error { font-size:13.5px; color:var(--red); margin-bottom:14px; min-height:18px; text-align:center; }
+  .auth-btn { width:100%; background:var(--gold); color:#fff; border:none; border-radius:var(--r-pill); padding:15px; font-size:16px; font-weight:600; font-family:var(--sans); cursor:pointer; box-shadow:0 4px 14px rgba(81,98,56,0.32); transition:background .15s, transform .12s; }
+  .auth-btn:active { transform:scale(0.98); background:var(--gold-press); }
+  .auth-btn:disabled { opacity:.5; }
+
+  /* SYNC PILL */
+  .sync-pill { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); background:var(--surface); border:1px solid var(--border); border-radius:var(--r-pill); padding:5px 11px; box-shadow:var(--shadow-sm); }
+  .sync-dot { width:7px; height:7px; border-radius:50%; background:var(--muted); }
+  .sync-dot.online { background:var(--green); }
+  .sync-dot.offline { background:var(--red); }
+  .sync-dot.syncing { background:var(--gold); animation:pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* IMAGES IN ADMIN / UPLOAD */
+  .img-preview-row { display:flex; gap:16px; align-items:flex-start; margin-bottom:8px; }
+  .img-preview { width:128px; height:128px; object-fit:cover; border-radius:var(--r-sm); border:1px solid var(--border); background:var(--surface2); flex-shrink:0; box-shadow:var(--shadow-sm); }
+  .img-clear-btn { background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:var(--r-pill); padding:0 16px; height:40px; font-size:14px; font-weight:500; font-family:var(--sans); cursor:pointer; box-shadow:var(--shadow-sm); transition:all .15s; }
+  .img-clear-btn:active { transform:scale(0.95); }
+  .divider-or { display:flex; align-items:center; gap:14px; margin:24px 0; color:var(--muted); font-size:11px; letter-spacing:1.4px; }
+  .divider-or::before, .divider-or::after { content:''; flex:1; height:1px; background:var(--border); }
+  .upload-zone { border:1.5px dashed rgba(81,98,56,0.35); border-radius:var(--radius); padding:44px 24px; text-align:center; cursor:pointer; transition:all .2s; margin-bottom:22px; background:var(--gold-soft); }
+  .upload-zone:active { transform:scale(0.99); }
+  @media(hover:hover){ .upload-zone:hover { border-color:var(--gold-dim); background:rgba(81,98,56,0.10); } }
+  .upload-icon { color:var(--gold); margin-bottom:14px; display:flex; justify-content:center; }
+  .upload-icon svg { width:42px; height:42px; }
+  .upload-title { font-size:17px; color:var(--cream); margin-bottom:6px; font-weight:600; }
+  .upload-sub { font-size:13.5px; color:var(--muted); line-height:1.55; }
+  .upload-progress { font-size:14px; color:var(--gold); margin-top:16px; display:none; font-weight:500; }
+  .upload-progress.show { display:block; }
+</style>
+</head>
+<body>
+
+<!-- INDEX SCREEN -->
+<div id="index-screen" class="screen active">
+  <div class="nav">
+    <div>
+      <div class="nav-title">Kitchen Recipes</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="nav-sub" id="recipe-count">0 recipes</span>
+        <span class="sync-pill" id="sync-pill"><span class="sync-dot" id="sync-dot"></span><span id="sync-label">Local</span></span>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="nav-btn" id="manage-btn" onclick="requestManage()">Manage</button>
+    </div>
+  </div>
+  <div class="search-bar">
+    <div class="search-wrap">
+      <svg class="search-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.2-4.2"/></svg>
+      <input class="search-input" id="search-input" type="text" placeholder="Search recipes…" oninput="renderIndex()" />
+    </div>
+  </div>
+  <div class="filter-row" id="filter-row">
+    <button class="tag-btn active" data-tag="All" onclick="setFilter('All')">All</button>
+  </div>
+  <div class="recipe-grid" id="recipe-grid"></div>
+</div>
+
+<!-- DETAIL SCREEN -->
+<div id="detail-screen" class="screen">
+  <div class="nav">
+    <button class="nav-btn" onclick="showIndex()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><span>Back</span></button>
+    <div style="text-align:center">
+      <div class="nav-title" id="detail-nav-title">Recipe</div>
+    </div>
+    <button class="nav-btn primary" onclick="startSlideshow()"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" stroke="none"><path d="M7 5l12 7-12 7z"/></svg><span>Present</span></button>
+  </div>
+  <div class="detail-body" id="detail-body"></div>
+</div>
+
+<!-- SLIDESHOW SCREEN -->
+<div id="slideshow-screen" class="screen" data-screen-label="Present">
+  <div class="present-topbar">
+    <button class="icon-round" id="slide-home" onclick="showIndex()" aria-label="Home"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg></button>
+    <div class="present-title" id="slide-nav-title"></div>
+    <div class="present-count" id="slide-count-label"></div>
+  </div>
+  <button class="present-tap left" onclick="slidePrev()" aria-label="Previous"></button>
+  <button class="present-tap right" onclick="slideNext()" aria-label="Next"></button>
+  <div class="slide-body" id="slide-body"></div>
+  <div class="present-controls">
+    <button class="present-nav-btn" id="slide-prev" onclick="slidePrev()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><span>Prev</span></button>
+    <div class="slide-dots" id="slide-dots"></div>
+    <button class="present-nav-btn primary" id="slide-next" onclick="slideNext()"><span>Next</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+</div>
+
+<!-- ADMIN SCREEN -->
+<div id="admin-screen" class="screen">
+  <div class="nav">
+    <button class="nav-btn" onclick="showIndex()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><span>Done</span></button>
+    <div class="nav-title">Manage Recipes</div>
+    <div style="display:flex;gap:10px">
+      <button class="nav-btn" id="signout-btn" onclick="signOut()" style="display:none"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4H6v16h8"/><path d="M10 12h10M17 8l4 4-4 4"/></svg><span>Sign Out</span></button>
+      <button class="nav-btn primary" onclick="showAddForm()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>Add Recipe</span></button>
+    </div>
+  </div>
+  <div class="admin-body" id="admin-body"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- PIN MODAL -->
+<div class="modal-overlay" id="pin-modal">
+  <div class="pin-modal">
+    <div class="pin-title">Manager Access</div>
+    <div class="pin-sub">Enter PIN to manage recipes</div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot-input"></div>
+      <div class="pin-dot-input"></div>
+      <div class="pin-dot-input"></div>
+      <div class="pin-dot-input"></div>
+    </div>
+    <div class="pin-pad" id="pin-pad"></div>
+    <button class="pin-cancel" onclick="closePin()">Cancel</button>
+  </div>
+</div>
+
+<!-- AUTH MODAL (cloud mode) -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="auth-modal">
+    <div class="auth-title">Chef Sign In</div>
+    <div class="auth-sub">Sign in to add or edit recipes.<br>Cooks can browse without signing in.</div>
+    <div class="auth-field">
+      <label>Email</label>
+      <input type="email" id="auth-email" autocomplete="username" placeholder="chef@restaurant.com" />
+    </div>
+    <div class="auth-field">
+      <label>Password</label>
+      <input type="password" id="auth-password" autocomplete="current-password" placeholder="••••••••" />
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <button class="auth-btn" id="auth-submit" onclick="doSignIn()">Sign In</button>
+    <button class="pin-cancel" onclick="closeAuth()" style="width:100%">Cancel</button>
+  </div>
+</div>
+
+<!-- HIDDEN PDF INPUT -->
+<input type="file" id="pdf-input" accept="application/pdf" style="display:none" />
+<input type="file" id="image-input" accept="image/*" style="display:none" />
+
+<script>
+// ── DATA STORE (IndexedDB) ──
+const DB_NAME = 'kitchen_recipes_db';
+const STORE = 'recipes';
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE)) {
+        d.createObjectStore(STORE, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function dbGetAll() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbPut(recipe) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(recipe);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function dbDelete(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// Persist the whole in-memory array (used after edits/imports). Clears then re-writes.
+function saveRecipes(list) {
+  return new Promise((resolve) => {
+    if (!db) return resolve(false);
+    const tx = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    store.clear();
+    list.forEach(r => store.put(r));
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => {
+      alert('Could not save to storage. The device may be critically low on space.');
+      resolve(false);
+    };
+  });
+}
+
+// ── CLOUD LAYER (Supabase) ──
+let supa = null;
+let cloudMode = false;     // true when keys are configured
+let isOnline = navigator.onLine;
+let currentUser = null;    // signed-in chef, or null
+let pendingWrites = [];    // edits made while offline, pushed on reconnect
+
+const CLOUD_TABLE = 'recipes';
+const PENDING_KEY = 'kitchen_pending_writes';
+
+function initCloud() {
+  if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
+    try {
+      supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      cloudMode = true;
+      // restore any queued offline writes
+      try { pendingWrites = JSON.parse(localStorage.getItem(PENDING_KEY)) || []; } catch { pendingWrites = []; }
+      return true;
+    } catch (e) { console.error('Supabase init failed', e); cloudMode = false; }
+  }
+  return false;
+}
+
+async function cloudFetchAll() {
+  const { data, error } = await supa.from(CLOUD_TABLE).select('*').order('title');
+  if (error) throw error;
+  // DB columns are snake_case; map to the app's shape
+  return (data || []).map(row => ({
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    description: row.description,
+    servings: row.servings,
+    prepTime: row.prep_time,
+    cookTime: row.cook_time,
+    ingredients: row.ingredients || [],
+    steps: row.steps || [],
+    notes: row.notes,
+    image: row.image,
+  }));
+}
+
+function toRow(r) {
+  return {
+    id: r.id, title: r.title, category: r.category, description: r.description,
+    servings: r.servings, prep_time: r.prepTime, cook_time: r.cookTime,
+    ingredients: r.ingredients, steps: r.steps, notes: r.notes, image: r.image,
+  };
+}
+
+async function cloudUpsert(recipe) {
+  const { error } = await supa.from(CLOUD_TABLE).upsert(toRow(recipe));
+  if (error) throw error;
+}
+async function cloudDelete(id) {
+  const { error } = await supa.from(CLOUD_TABLE).delete().eq('id', id);
+  if (error) throw error;
+}
+
+function queueWrite(op, payload) {
+  pendingWrites.push({ op, payload, ts: Date.now() });
+  localStorage.setItem(PENDING_KEY, JSON.stringify(pendingWrites));
+}
+async function flushPending() {
+  if (!cloudMode || !isOnline || !currentUser || pendingWrites.length === 0) return;
+  setSync('syncing');
+  const queue = [...pendingWrites];
+  for (const w of queue) {
+    try {
+      if (w.op === 'upsert') await cloudUpsert(w.payload);
+      else if (w.op === 'delete') await cloudDelete(w.payload);
+      pendingWrites.shift();
+      localStorage.setItem(PENDING_KEY, JSON.stringify(pendingWrites));
+    } catch (e) { console.error('flush failed, will retry', e); break; }
+  }
+  setSync();
+}
+
+// ── SYNC STATUS PILL ──
+function setSync(state) {
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  if (!dot || !label) return;
+  dot.className = 'sync-dot';
+  if (!cloudMode) { label.textContent = 'Local'; return; }
+  if (state === 'syncing') { dot.classList.add('syncing'); label.textContent = 'Syncing…'; return; }
+  if (isOnline) {
+    dot.classList.add('online');
+    label.textContent = currentUser ? 'Synced' : 'Live';
+  } else {
+    dot.classList.add('offline');
+    label.textContent = pendingWrites.length ? `Offline · ${pendingWrites.length} queued` : 'Offline';
+  }
+}
+
+window.addEventListener('online', () => { isOnline = true; setSync(); flushPending().then(refreshFromCloud); });
+window.addEventListener('offline', () => { isOnline = false; setSync(); });
+
+let recipes = [];
+let currentFilter = 'All';
+
+let currentRecipeId = null;
+let slideIndex = 0;
+let slidePages = [];
+
+const SEED_RECIPES = [
+  {
+    id: uid(),
+    title: 'Pan-Seared Duck Breast',
+    category: 'Proteins',
+    description: 'Crispy-skinned duck breast with a cherry gastrique. Score the fat cap in a crosshatch pattern for even rendering.',
+    servings: '4',
+    prepTime: '15 min',
+    cookTime: '25 min',
+    ingredients: [
+      { amount: '4 each', item: 'Duck breasts, 6–7 oz' },
+      { amount: '1 tsp', item: 'Kosher salt' },
+      { amount: '1/2 tsp', item: 'Black pepper, ground' },
+      { amount: '1 cup', item: 'Cherries, pitted' },
+      { amount: '1/4 cup', item: 'Red wine vinegar' },
+      { amount: '2 tbsp', item: 'Honey' },
+      { amount: '1/2 cup', item: 'Chicken stock' },
+      { amount: '2 tbsp', item: 'Unsalted butter, cold' },
+    ],
+    steps: [
+      'Score duck fat in a 1/2-inch crosshatch pattern, being careful not to cut into the meat. Season generously with salt and pepper.',
+      'Place duck breasts fat-side down in a cold skillet. Heat over medium and cook 12–15 minutes until fat is rendered and skin is golden.',
+      'Flip and cook 5–7 minutes for medium-rare (130°F internal). Rest 8 minutes tented with foil.',
+      'In the same pan, drain most fat. Add cherries and cook 2 minutes. Add vinegar and reduce by half. Add honey and stock, simmer 5 minutes.',
+      'Off heat, swirl in cold butter. Season, slice duck, and spoon gastrique over.',
+    ],
+    notes: 'Starting in a cold pan is key — it slowly renders the fat without burning the skin.'
+  },
+  {
+    id: uid(),
+    title: 'Roasted Cauliflower Velouté',
+    category: 'Soups',
+    description: 'Silky smooth cauliflower soup with brown butter and crispy capers. Can be made ahead and reheated.',
+    servings: '6',
+    prepTime: '10 min',
+    cookTime: '45 min',
+    ingredients: [
+      { amount: '2 heads', item: 'Cauliflower, cut into florets' },
+      { amount: '3 tbsp', item: 'Olive oil' },
+      { amount: '1 each', item: 'Yellow onion, diced' },
+      { amount: '4 cloves', item: 'Garlic' },
+      { amount: '4 cups', item: 'Vegetable stock' },
+      { amount: '1 cup', item: 'Heavy cream' },
+      { amount: '4 tbsp', item: 'Unsalted butter' },
+      { amount: '2 tbsp', item: 'Capers, drained' },
+    ],
+    steps: [
+      'Toss cauliflower with olive oil, salt, pepper. Roast at 425°F for 25–30 minutes until golden and slightly charred.',
+      'Sweat onion in butter 5 minutes. Add garlic, cook 1 minute. Add roasted cauliflower and stock. Simmer 10 minutes.',
+      'Blend in batches until very smooth. Strain through a fine mesh sieve. Stir in cream and adjust seasoning.',
+      'Brown remaining butter in a small pan until nutty. Add capers and fry 1 minute until crisp.',
+      'Serve soup hot, drizzled with brown butter and crispy capers.',
+    ],
+    notes: 'The roasting step is non-negotiable — it gives the soup depth vs. steamed or boiled cauliflower.'
+  }
+];
+
+
+function uid() { return Math.random().toString(36).slice(2,10); }
+
+// ── PDF.JS WORKER ──
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ── PIN GATE ──
+const MANAGER_PIN = '4385';
+let pinEntry = '';
+
+function buildPinPad() {
+  const pad = document.getElementById('pin-pad');
+  const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  pad.innerHTML = keys.map(k => {
+    if (k === '') return '<div class="pin-key blank"></div>';
+    return `<button class="pin-key" data-key="${k}">${k}</button>`;
+  }).join('');
+  pad.querySelectorAll('.pin-key[data-key]').forEach(btn => {
+    btn.onclick = () => pinPress(btn.dataset.key);
+  });
+}
+
+function requestManage() {
+  // Cloud mode: require a real sign-in. Local-only mode: fall back to PIN.
+  if (cloudMode) {
+    if (currentUser) {
+      showAdmin();
+    } else {
+      openAuth();
+    }
+    return;
+  }
+  pinEntry = '';
+  updatePinDots();
+  document.getElementById('pin-modal').classList.add('show');
+}
+function closePin() {
+  document.getElementById('pin-modal').classList.remove('show');
+  pinEntry = '';
+  updatePinDots();
+}
+function pinPress(key) {
+  if (key === '⌫') {
+    pinEntry = pinEntry.slice(0, -1);
+  } else if (pinEntry.length < 4) {
+    pinEntry += key;
+  }
+  updatePinDots();
+  if (pinEntry.length === 4) {
+    setTimeout(checkPin, 150);
+  }
+}
+function updatePinDots(error) {
+  document.querySelectorAll('#pin-dots .pin-dot-input').forEach((d, i) => {
+    d.classList.toggle('filled', i < pinEntry.length);
+    d.classList.toggle('error', !!error);
+  });
+}
+function checkPin() {
+  if (pinEntry === MANAGER_PIN) {
+    closePin();
+    showAdmin();
+  } else {
+    updatePinDots(true);
+    setTimeout(() => { pinEntry = ''; updatePinDots(); }, 600);
+  }
+}
+buildPinPad();
+
+// ── AUTH (cloud mode) ──
+function openAuth() {
+  document.getElementById('auth-error').textContent = '';
+  document.getElementById('auth-modal').classList.add('show');
+  setTimeout(() => document.getElementById('auth-email').focus(), 100);
+}
+function closeAuth() {
+  document.getElementById('auth-modal').classList.remove('show');
+}
+async function doSignIn() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  const btn = document.getElementById('auth-submit');
+  if (!email || !password) { errEl.textContent = 'Enter email and password.'; return; }
+  btn.disabled = true; btn.textContent = 'Signing in…'; errEl.textContent = '';
+  try {
+    const { data, error } = await supa.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    currentUser = data.user;
+    closeAuth();
+    updateAuthUI();
+    setSync();
+    showToast('Signed in');
+    await flushPending();
+    await refreshFromCloud();
+    showAdmin();
+  } catch (e) {
+    errEl.textContent = e.message || 'Sign in failed.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+async function signOut() {
+  if (cloudMode && supa) { try { await supa.auth.signOut(); } catch {} }
+  currentUser = null;
+  updateAuthUI();
+  setSync();
+  showToast('Signed out');
+  showIndex();
+}
+function updateAuthUI() {
+  const btn = document.getElementById('manage-btn');
+  const label = (!cloudMode || currentUser) ? 'Manage' : 'Sign In';
+  btn.innerHTML = icon(label === 'Manage' ? 'sliders' : 'login') + '<span>' + label + '</span>';
+}
+
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── SCREEN SWITCHING ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showIndex() { renderIndex(); showScreen('index-screen'); }
+function showAdmin() {
+  const so = document.getElementById('signout-btn');
+  if (so) so.style.display = cloudMode ? '' : 'none';
+  renderAdmin();
+  showScreen('admin-screen');
+}
+
+// ── INDEX ──
+function getCategories() {
+  const cats = [...new Set(recipes.map(r => r.category).filter(Boolean))].sort();
+  return ['All', ...cats];
+}
+function setFilter(tag) {
+  currentFilter = tag;
+  document.querySelectorAll('.tag-btn').forEach(b => b.classList.toggle('active', b.dataset.tag === tag));
+  renderIndex();
+}
+function renderIndex() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filterRow = document.getElementById('filter-row');
+  filterRow.innerHTML = '';
+  getCategories().forEach(cat => {
+    const b = document.createElement('button');
+    b.className = 'tag-btn' + (cat === currentFilter ? ' active' : '');
+    b.dataset.tag = cat;
+    b.textContent = cat;
+    b.onclick = () => setFilter(cat);
+    filterRow.appendChild(b);
+  });
+
+  const filtered = recipes.filter(r => {
+    const matchCat = currentFilter === 'All' || r.category === currentFilter;
+    const matchQ = !q || r.title.toLowerCase().includes(q) || (r.description||'').toLowerCase().includes(q) || (r.category||'').toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+
+  document.getElementById('recipe-count').textContent = `${recipes.length} recipe${recipes.length !== 1 ? 's' : ''}`;
+  const grid = document.getElementById('recipe-grid');
+  grid.innerHTML = '';
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">${icon('empty')}</div><div class="empty-title">No recipes found</div><div class="empty-sub">Try adjusting your search or add a new recipe from Manage.</div></div>`;
+    return;
+  }
+
+  filtered.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'recipe-card';
+    card.innerHTML = `
+      ${r.image ? `<img class="card-image" src="${r.image}" alt="${escAttr(r.title)}" />` : `<div class="card-image card-image-empty">${icon('image')}</div>`}
+      <div class="card-pad">
+        <div class="card-category">${escHtml(r.category || 'Uncategorized')}</div>
+        <div class="card-title">${escHtml(r.title)}</div>
+        ${r.description ? `<div class="card-desc">${escHtml(r.description)}</div>` : ''}
+        <div class="card-meta">
+          ${r.servings ? `<span>${icon('users')} ${escHtml(r.servings)}</span>` : ''}
+          ${r.prepTime ? `<span>${icon('clock')} ${escHtml(r.prepTime)}</span>` : ''}
+          ${r.cookTime ? `<span>${icon('flame')} ${escHtml(r.cookTime)}</span>` : ''}
+        </div>
+      </div>`;
+    card.onclick = () => showDetail(r.id);
+    grid.appendChild(card);
+  });
+}
+
+// ── DETAIL ──
+function showDetail(id) {
+  currentRecipeId = id;
+  const r = recipes.find(r => r.id === id);
+  if (!r) return;
+  document.getElementById('detail-nav-title').textContent = r.title;
+  const body = document.getElementById('detail-body');
+  body.innerHTML = `
+    <div class="detail-category">${escHtml(r.category || 'Uncategorized')}</div>
+    <div class="detail-title">${escHtml(r.title)}</div>
+    ${r.image ? `<img class="detail-image" src="${r.image}" alt="${escAttr(r.title)}" />` : ''}
+    ${r.description ? `<div class="detail-desc">${escHtml(r.description)}</div>` : ''}
+    <div class="detail-meta-row">
+      ${r.servings ? `<div class="meta-chip"><strong>Servings</strong>${escHtml(r.servings)}</div>` : ''}
+      ${r.prepTime ? `<div class="meta-chip"><strong>Prep Time</strong>${escHtml(r.prepTime)}</div>` : ''}
+      ${r.cookTime ? `<div class="meta-chip"><strong>Cook Time</strong>${escHtml(r.cookTime)}</div>` : ''}
+    </div>
+    <hr class="detail-divider" />
+    <div class="section-label">Ingredients</div>
+    <ul class="ingredients-list">
+      ${(r.ingredients||[]).map(ing => `<li><span class="ing-amount">${escHtml(ing.amount)}</span><span>${escHtml(ing.item)}</span></li>`).join('')}
+    </ul>
+    <hr class="detail-divider" />
+    <div class="section-label">Method</div>
+    <ol class="steps-list">
+      ${(r.steps||[]).map((s,i) => `<div class="step"><div class="step-num">${i+1}</div><div class="step-text">${escHtml(s)}</div></div>`).join('')}
+    </ol>
+    ${r.notes ? `<div class="notes-box"><strong>Chef's Notes</strong>${escHtml(r.notes)}</div>` : ''}
+  `;
+  showScreen('detail-screen');
+}
+
+// ── SLIDESHOW ──
+function buildSlidePages(r) {
+  const pages = [];
+  // Page 0: Title / overview
+  pages.push({ type: 'title', recipe: r });
+  // Page 1: Ingredients
+  pages.push({ type: 'ingredients', recipe: r });
+  // Page(s): Steps — chunk into groups of 4
+  const steps = r.steps || [];
+  for (let i = 0; i < steps.length; i += 4) {
+    pages.push({ type: 'steps', recipe: r, steps: steps.slice(i, i+4), startIndex: i });
+  }
+  // Final page: notes if any
+  if (r.notes) pages.push({ type: 'notes', recipe: r });
+  return pages;
+}
+
+function renderSlidePage(page) {
+  const body = document.getElementById('slide-body');
+  const r = page.recipe;
+
+  if (page.type === 'title') {
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:${r.image ? '1.3fr 1fr' : '1fr'};gap:40px;align-items:start">
+        <div>
+          <div class="slide-category">${escHtml(r.category || 'Uncategorized')}</div>
+          <div class="slide-main-title">${escHtml(r.title)}</div>
+          ${r.description ? `<div class="slide-desc">${escHtml(r.description)}</div>` : ''}
+          <div class="detail-meta-row">
+            ${r.servings ? `<div class="meta-chip"><strong>Servings</strong>${escHtml(r.servings)}</div>` : ''}
+            ${r.prepTime ? `<div class="meta-chip"><strong>Prep Time</strong>${escHtml(r.prepTime)}</div>` : ''}
+            ${r.cookTime ? `<div class="meta-chip"><strong>Cook Time</strong>${escHtml(r.cookTime)}</div>` : ''}
+          </div>
+        </div>
+        ${r.image ? `<img class="slide-image" src="${r.image}" alt="${escAttr(r.title)}" />` : ''}
+      </div>
+    `;
+  } else if (page.type === 'ingredients') {
+    body.innerHTML = `
+      <div class="section-label" style="margin-bottom:20px">Ingredients</div>
+      <ul class="slide-ing-list">
+        ${(r.ingredients||[]).map(ing => `<li><span class="slide-ing-amount">${escHtml(ing.amount)}</span><span>${escHtml(ing.item)}</span></li>`).join('')}
+      </ul>
+    `;
+  } else if (page.type === 'steps') {
+    body.innerHTML = `
+      <div class="section-label" style="margin-bottom:20px">Method${slidePages.filter(p=>p.type==='steps').length > 1 ? ` (${Math.floor(page.startIndex/4)+1})` : ''}</div>
+      <ol class="slide-steps-list">
+        ${page.steps.map((s,i) => `<div class="slide-step"><div class="slide-step-num">${page.startIndex+i+1}</div><div class="slide-step-text">${escHtml(s)}</div></div>`).join('')}
+      </ol>
+    `;
+  } else if (page.type === 'notes') {
+    body.innerHTML = `
+      <div class="section-label" style="margin-bottom:20px">Chef's Notes</div>
+      <div class="slide-notes"><strong>Remember</strong>${escHtml(r.notes)}</div>
+    `;
+  }
+
+  // Update dots
+  const dots = document.getElementById('slide-dots');
+  dots.innerHTML = slidePages.map((_,i) => `<div class="slide-dot${i===slideIndex?' active':''}"></div>`).join('');
+
+  // Update buttons
+  document.getElementById('slide-prev').disabled = slideIndex === 0;
+  const cl = document.getElementById('slide-count-label');
+  if (cl) cl.textContent = (slideIndex + 1) + ' / ' + slidePages.length;
+  const nextBtn = document.getElementById('slide-next');
+  const isLast = slideIndex === slidePages.length - 1;
+  nextBtn.disabled = false; // always clickable: advances, or finishes on the last slide
+  nextBtn.innerHTML = isLast ? ('<span>Done</span>' + icon('check')) : ('<span>Next</span>' + icon('chevronRight'));
+  nextBtn.onclick = isLast ? () => showDetail(currentRecipeId) : slideNext;
+}
+
+function startSlideshow() {
+  const r = recipes.find(r => r.id === currentRecipeId);
+  if (!r) return;
+  slidePages = buildSlidePages(r);
+  slideIndex = 0;
+  document.getElementById('slide-nav-title').textContent = r.title;
+  renderSlidePage(slidePages[slideIndex]);
+  showScreen('slideshow-screen');
+}
+
+function slideNext() {
+  if (slideIndex < slidePages.length - 1) {
+    slideIndex++;
+    renderSlidePage(slidePages[slideIndex]);
+  }
+}
+function slidePrev() {
+  if (slideIndex > 0) {
+    slideIndex--;
+    renderSlidePage(slidePages[slideIndex]);
+  }
+}
+
+// swipe support
+let touchStartX = 0;
+document.getElementById('slideshow-screen').addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+document.getElementById('slideshow-screen').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) dx < 0 ? slideNext() : slidePrev();
+}, { passive: true });
+
+// ── ADMIN ──
+let editingId = null;
+let formIngredients = [];
+let formSteps = [];
+let formImage = null;
+
+function renderAdmin() {
+  editingId = null;
+  const body = document.getElementById('admin-body');
+  body.innerHTML = `
+    <div class="admin-section-title">All Recipes</div>
+    ${recipes.length === 0 ? '<div style="color:var(--muted);font-size:14px;padding:20px 0">No recipes yet. Add one above.</div>' : ''}
+    <ul class="recipe-list-admin">
+      ${recipes.map(r => `
+        <li class="recipe-list-item">
+          <div class="rli-info">
+            <div class="rli-title">${escHtml(r.title)}</div>
+            <div class="rli-cat">${escHtml(r.category || 'Uncategorized')}</div>
+          </div>
+          <div class="rli-actions">
+            <button class="icon-btn" onclick="editRecipe('${r.id}')">Edit</button>
+            <button class="icon-btn del" onclick="deleteRecipe('${r.id}')">Delete</button>
+          </div>
+        </li>`).join('')}
+    </ul>
+  `;
+}
+
+function showAddForm(id) {
+  editingId = id || null;
+  const r = id ? recipes.find(r => r.id === id) : null;
+  formIngredients = r ? [...r.ingredients] : [{ amount: '', item: '' }];
+  formSteps = r ? [...r.steps] : [''];
+  formImage = r ? (r.image || null) : null;
+
+  const body = document.getElementById('admin-body');
+  body.innerHTML = `
+    <div class="admin-section-title">${r ? 'Edit Recipe' : 'New Recipe'}</div>
+    ${!r ? `
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('pdf-input').click()">
+      <div class="upload-icon">${icon('doc')}</div>
+      <div class="upload-title">Upload a recipe PDF</div>
+      <div class="upload-sub">Chef's PDF will be read automatically — text and the dish photo<br>get pulled in. You can review and edit everything before saving.</div>
+      <div class="upload-progress" id="upload-progress">Reading PDF…</div>
+    </div>
+    <div class="divider-or">OR ENTER MANUALLY</div>
+    ` : ''}
+    <div class="form-group">
+      <label class="form-label">Dish Photo</label>
+      <div class="img-preview-row">
+        <img class="img-preview" id="img-preview" src="${formImage || ''}" alt="dish" style="${formImage ? '' : 'display:none'}" />
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="img-clear-btn" onclick="document.getElementById('image-input').click()">${formImage ? 'Replace photo' : 'Upload photo'}</button>
+          ${formImage ? `<button class="img-clear-btn" onclick="clearFormImage()">Remove photo</button>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Recipe Title *</label>
+      <input class="form-input" id="f-title" placeholder="e.g. Pan-Seared Duck Breast" value="${r ? escHtml(r.title) : ''}" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <input class="form-input" id="f-category" placeholder="e.g. Proteins, Soups…" value="${r ? escHtml(r.category||'') : ''}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Servings</label>
+        <input class="form-input" id="f-servings" placeholder="e.g. 4" value="${r ? escHtml(r.servings||'') : ''}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prep / Cook</label>
+        <input class="form-input" id="f-preptime" placeholder="Prep" style="margin-bottom:8px" value="${r ? escHtml(r.prepTime||'') : ''}" />
+        <input class="form-input" id="f-cooktime" placeholder="Cook" value="${r ? escHtml(r.cookTime||'') : ''}" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-textarea" id="f-desc" placeholder="Brief description…">${r ? escHtml(r.description||'') : ''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ingredients</label>
+      <div class="ingredients-editor" id="ing-editor"></div>
+      <button class="add-btn" onclick="addIngRow()">+ Add ingredient</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Steps</label>
+      <div class="steps-editor" id="steps-editor"></div>
+      <button class="add-btn" onclick="addStepRow()">+ Add step</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Chef's Notes</label>
+      <textarea class="form-textarea" id="f-notes" placeholder="Tips, variations, plating notes…">${r ? escHtml(r.notes||'') : ''}</textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveRecipe()">Save Recipe</button>
+      <button class="btn btn-secondary" onclick="renderAdmin()">Cancel</button>
+      ${r ? `<button class="btn btn-danger" onclick="deleteRecipe('${r.id}')">Delete</button>` : ''}
+    </div>
+  `;
+  renderIngEditor();
+  renderStepsEditor();
+}
+
+// ── LINE ICONS (SF-Symbols-style) ──
+const ICONS = {
+  search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.2-4.2"/>',
+  users:'<circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 6.4a3 3 0 0 1 0 5.2"/><path d="M17.5 14.3A5.5 5.5 0 0 1 20.5 19"/>',
+  clock:'<circle cx="12" cy="12" r="8.2"/><path d="M12 7.5V12l3 1.8"/>',
+  flame:'<path d="M12 2.5c1 3.2 4 4.6 4 8.2a4 4 0 0 1-8 0c0-1.3.5-2.4 1.1-3.1.2.9.9 1.4 1.5 1.4.9 0 1.2-.9.9-2.2-.3-1.4-.2-2.9.5-4.3z"/>',
+  image:'<rect x="3" y="4.5" width="18" height="15" rx="3"/><circle cx="8.5" cy="10" r="1.8"/><path d="M21 16l-5-4.5-8.5 8"/>',
+  doc:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 6.5"/>',
+  chevronRight:'<path d="M9 5l7 7-7 7"/>',
+  chevronLeft:'<path d="M15 5l-7 7 7 7"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  sliders:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.4"/><circle cx="9" cy="17" r="2.4"/>',
+  login:'<path d="M10 4h8v16h-8"/><path d="M3 12h11M11 8l4 4-4 4"/>',
+  empty:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/>',
+  play:'<path d="M7 5l12 7-12 7z"/>',
+};
+function icon(name) {
+  const filled = name === 'play';
+  return '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="' + (filled ? 'currentColor' : 'none') +
+    '" stroke="' + (filled ? 'none' : 'currentColor') +
+    '" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + (ICONS[name] || '') + '</svg>';
+}
+
+function escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function clearFormImage() {
+  formImage = null;
+  updatePhotoControls();
+}
+function refreshImagePreview() {
+  updatePhotoControls();
+}
+// Update the dish-photo preview and button labels in place, without
+// re-rendering the whole form (so typed-in fields aren't lost).
+function updatePhotoControls() {
+  const img = document.getElementById('img-preview');
+  if (!img) return;
+  const btnWrap = img.parentElement.querySelector('div');
+  if (formImage) {
+    img.src = formImage;
+    img.style.display = '';
+    btnWrap.innerHTML =
+      `<button class="img-clear-btn" onclick="document.getElementById('image-input').click()">Replace photo</button>` +
+      `<button class="img-clear-btn" onclick="clearFormImage()">Remove photo</button>`;
+  } else {
+    img.removeAttribute('src');
+    img.style.display = 'none';
+    btnWrap.innerHTML =
+      `<button class="img-clear-btn" onclick="document.getElementById('image-input').click()">Upload photo</button>`;
+  }
+}
+
+function renderIngEditor() {
+  const ed = document.getElementById('ing-editor');
+  if (!ed) return;
+  ed.innerHTML = formIngredients.map((ing, i) => `
+    <div class="ing-row">
+      <input class="form-input" placeholder="Amount" value="${escHtml(ing.amount)}" oninput="formIngredients[${i}].amount=this.value" />
+      <input class="form-input" placeholder="Ingredient" value="${escHtml(ing.item)}" oninput="formIngredients[${i}].item=this.value" />
+      <button class="remove-btn" onclick="removeIng(${i})">×</button>
+    </div>`).join('');
+}
+function addIngRow() { formIngredients.push({ amount: '', item: '' }); renderIngEditor(); }
+function removeIng(i) { formIngredients.splice(i, 1); renderIngEditor(); }
+
+function renderStepsEditor() {
+  const ed = document.getElementById('steps-editor');
+  if (!ed) return;
+  ed.innerHTML = formSteps.map((s, i) => `
+    <div class="step-row">
+      <textarea class="form-textarea" style="min-height:60px" placeholder="Step ${i+1}…" oninput="formSteps[${i}]=this.value">${escHtml(s)}</textarea>
+      <button class="remove-btn" onclick="removeStep(${i})" style="margin-top:6px">×</button>
+    </div>`).join('');
+}
+function addStepRow() { formSteps.push(''); renderStepsEditor(); }
+function removeStep(i) { formSteps.splice(i, 1); renderStepsEditor(); }
+
+function editRecipe(id) { showAddForm(id); }
+
+async function deleteRecipe(id) {
+  if (!confirm('Delete this recipe?')) return;
+  recipes = recipes.filter(r => r.id !== id);
+  await saveRecipes(recipes); // update local cache
+  if (cloudMode) {
+    if (isOnline && currentUser) {
+      try { setSync('syncing'); await cloudDelete(id); setSync(); }
+      catch (e) { console.error(e); queueWrite('delete', id); setSync(); }
+    } else {
+      queueWrite('delete', id); setSync();
+    }
+  }
+  showToast('Recipe deleted');
+  renderAdmin();
+}
+
+function saveRecipe() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { alert('Recipe title is required.'); return; }
+
+  const data = {
+    id: editingId || uid(),
+    title,
+    category: document.getElementById('f-category').value.trim(),
+    servings: document.getElementById('f-servings').value.trim(),
+    prepTime: document.getElementById('f-preptime').value.trim(),
+    cookTime: document.getElementById('f-cooktime').value.trim(),
+    description: document.getElementById('f-desc').value.trim(),
+    ingredients: formIngredients.filter(i => i.item),
+    steps: formSteps.filter(s => s.trim()),
+    notes: document.getElementById('f-notes').value.trim(),
+    image: formImage || null,
+  };
+
+  if (editingId) {
+    recipes = recipes.map(r => r.id === editingId ? data : r);
+  } else {
+    recipes.push(data);
+  }
+  saveRecipes(recipes); // update local cache immediately
+  if (cloudMode) {
+    if (isOnline && currentUser) {
+      setSync('syncing');
+      cloudUpsert(data).then(() => setSync()).catch(e => { console.error(e); queueWrite('upsert', data); setSync(); });
+    } else {
+      queueWrite('upsert', data); setSync();
+    }
+  }
+  showToast(editingId ? 'Recipe updated!' : 'Recipe added!');
+  renderAdmin();
+}
+
+// ── DIRECT IMAGE UPLOAD ──
+// Lets the chef set or replace a dish photo on any recipe (new or existing)
+// without re-importing the PDF. Downscales large photos before storing.
+document.getElementById('image-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+  try {
+    const dataUrl = await downscaleImageFile(file, 1000, 0.85);
+    formImage = dataUrl;
+    updatePhotoControls();
+  } catch (err) {
+    console.error(err);
+    alert('Could not load that image. Try a JPG or PNG.');
+  }
+});
+
+function downscaleImageFile(file, maxW, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = img.width > maxW ? maxW / img.width : 1;
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── PDF IMPORT ──
+document.getElementById('pdf-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = ''; // reset so same file can be re-picked
+  const progress = document.getElementById('upload-progress');
+  if (progress) progress.classList.add('show');
+
+  try {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+
+    // Extract text from all pages
+    let fullText = '';
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      // Reconstruct lines using y-position
+      let lastY = null, line = '';
+      const lines = [];
+      content.items.forEach(item => {
+        const y = item.transform[5];
+        if (lastY !== null && Math.abs(y - lastY) > 3) { lines.push(line.trim()); line = ''; }
+        line += item.str + ' ';
+        lastY = y;
+      });
+      if (line.trim()) lines.push(line.trim());
+      fullText += lines.join('\n') + '\n';
+    }
+
+    // Extract largest image from page 1 as the dish photo
+    let dishImage = null;
+    try {
+      dishImage = await extractDishImage(pdf);
+    } catch (imgErr) { console.warn('Image extraction failed:', imgErr); }
+
+    // Parse text into recipe fields
+    const parsed = parseRecipeText(fullText, file.name);
+    if (dishImage) parsed.image = dishImage;
+
+    // Populate the form with parsed data
+    populateFormFromParsed(parsed);
+    showToast('PDF imported — review and save');
+  } catch (err) {
+    console.error(err);
+    alert('Could not read this PDF. You can enter the recipe manually instead.');
+  } finally {
+    if (progress) progress.classList.remove('show');
+  }
+});
+
+async function extractDishImage(pdf) {
+  // Pull the embedded photo out of page 1. The recipe sheets have one large
+  // raster image (the dish), so we find it, convert its pixels to a canvas,
+  // and return that. Falls back to a page render only if no usable image.
+  const page = await pdf.getPage(1);
+
+  // Render the page first — this forces pdf.js to load/resolve the image objects
+  // so we can read them afterward.
+  const viewport = page.getViewport({ scale: 1.5 });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+  // Collect every image drawn on the page.
+  const ops = await page.getOperatorList();
+  const imgNames = [];
+  for (let i = 0; i < ops.fnArray.length; i++) {
+    if (ops.fnArray[i] === pdfjsLib.OPS.paintImageXObject) {
+      imgNames.push(ops.argsArray[i][0]);
+    }
+  }
+
+  // Resolve an image object by name using the async callback form.
+  // The synchronous get() throws if the object isn't ready yet — that was the bug.
+  function resolveImg(name) {
+    return new Promise((resolve) => {
+      try {
+        page.objs.get(name, (img) => resolve(img));
+      } catch (e) { resolve(null); }
+    });
+  }
+
+  // Find the largest image (the dish photo, not a tiny logo/icon).
+  let best = null;
+  for (const name of imgNames) {
+    const img = await resolveImg(name);
+    if (img && img.width > 200 && img.height > 200) {
+      if (!best || img.width * img.height > best.width * best.height) best = img;
+    }
+  }
+
+  if (best) {
+    try {
+      const out = imageObjToCanvas(best);
+      if (out) {
+        // Crop any uniform white margins baked into the source image,
+        // then cap width so the stored data URL stays a reasonable size.
+        const trimmed = trimWhiteBorders(out);
+        return downscaleCanvas(trimmed, 1000).toDataURL('image/jpeg', 0.85);
+      }
+    } catch (e) { /* fall through */ }
+  }
+
+  // Fallback: a downscaled render of the whole page.
+  return downscaleCanvas(canvas, 800).toDataURL('image/jpeg', 0.82);
+}
+
+// Detect and crop uniform near-white borders around a canvas. Recipe-sheet
+// photos are often centered in a white frame; this removes that frame so the
+// card/slideshow shows the dish edge-to-edge.
+function trimWhiteBorders(src) {
+  const w = src.width, h = src.height;
+  const cx = src.getContext('2d');
+  let data;
+  try { data = cx.getImageData(0, 0, w, h).data; }
+  catch (e) { return src; } // tainted canvas — skip trim
+  const THRESH = 238;       // pixels brighter than this count as "white"
+  const isWhiteRow = (y) => {
+    for (let x = 0; x < w; x += 4) {
+      const i = (y * w + x) * 4;
+      if (data[i] < THRESH || data[i+1] < THRESH || data[i+2] < THRESH) return false;
+    }
+    return true;
+  };
+  const isWhiteCol = (x) => {
+    for (let y = 0; y < h; y += 4) {
+      const i = (y * w + x) * 4;
+      if (data[i] < THRESH || data[i+1] < THRESH || data[i+2] < THRESH) return false;
+    }
+    return true;
+  };
+  let top = 0, bottom = h - 1, left = 0, right = w - 1;
+  while (top < bottom && isWhiteRow(top)) top++;
+  while (bottom > top && isWhiteRow(bottom)) bottom--;
+  while (left < right && isWhiteCol(left)) left++;
+  while (right > left && isWhiteCol(right)) right--;
+  const cropW = right - left + 1, cropH = bottom - top + 1;
+  // Only crop if it actually removed a meaningful border and leaves a sane image.
+  if (cropW < w * 0.5 && cropH < h * 0.5) return src; // too aggressive, bail
+  if (cropW >= w && cropH >= h) return src;            // nothing to trim
+  if (cropW < 50 || cropH < 50) return src;
+  const out = document.createElement('canvas');
+  out.width = cropW; out.height = cropH;
+  out.getContext('2d').drawImage(src, left, top, cropW, cropH, 0, 0, cropW, cropH);
+  return out;
+}
+
+// Convert a pdf.js image object (raw pixel data) into a canvas.
+function imageObjToCanvas(img) {
+  const { width, height, kind } = img;
+  const src = img.data;
+  if (!src) {
+    // Some builds expose an ImageBitmap instead of raw data.
+    if (img.bitmap) {
+      const c = document.createElement('canvas');
+      c.width = width; c.height = height;
+      c.getContext('2d').drawImage(img.bitmap, 0, 0);
+      return c;
+    }
+    return null;
+  }
+  const c = document.createElement('canvas');
+  c.width = width; c.height = height;
+  const cx = c.getContext('2d');
+  const out = cx.createImageData(width, height);
+  const dst = out.data;
+  // kind: 1 = grayscale, 2 = RGB, 3 = RGBA (pdf.js ImageKind enum)
+  if (kind === 3 || src.length === width * height * 4) {
+    dst.set(src);
+  } else if (kind === 2 || src.length === width * height * 3) {
+    for (let j = 0, k = 0; j < src.length; j += 3, k += 4) {
+      dst[k] = src[j]; dst[k+1] = src[j+1]; dst[k+2] = src[j+2]; dst[k+3] = 255;
+    }
+  } else if (kind === 1 || src.length === width * height) {
+    for (let j = 0, k = 0; j < src.length; j += 1, k += 4) {
+      dst[k] = dst[k+1] = dst[k+2] = src[j]; dst[k+3] = 255;
+    }
+  } else {
+    return null; // unknown format
+  }
+  cx.putImageData(out, 0, 0);
+  return c;
+}
+
+// Downscale a canvas so its width is at most maxW, preserving aspect ratio.
+function downscaleCanvas(src, maxW) {
+  if (src.width <= maxW) return src;
+  const ratio = maxW / src.width;
+  const c = document.createElement('canvas');
+  c.width = maxW;
+  c.height = Math.round(src.height * ratio);
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+  return c;
+}
+
+function parseRecipeText(text, filename) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const result = { title: '', category: '', servings: '', prepTime: '', cookTime: '', description: '', ingredients: [], steps: [], notes: '' };
+
+  // Title: first substantial line, or filename
+  result.title = lines[0] && lines[0].length < 80 ? lines[0] : filename.replace(/\.pdf$/i, '');
+
+  // Scan for metadata
+  lines.forEach(l => {
+    const low = l.toLowerCase();
+    let m;
+    if ((m = low.match(/serv(?:es|ings?)[:\s]+([\d\-–to ]+)/))) result.servings = m[1].trim();
+    if ((m = low.match(/prep(?:\s*time)?[:\s]+([\d]+\s*(?:min|hr|hour|m|h)[a-z]*)/))) result.prepTime = m[1].trim();
+    if ((m = low.match(/cook(?:\s*time)?[:\s]+([\d]+\s*(?:min|hr|hour|m|h)[a-z]*)/))) result.cookTime = m[1].trim();
+  });
+
+  // Section detection
+  const ingIdx = lines.findIndex(l => /^ingredients?$/i.test(l) || /^ingredients[:]/i.test(l));
+  const methodIdx = lines.findIndex(l => /^(method|steps|instructions|directions|preparation)[:]?$/i.test(l));
+
+  if (ingIdx !== -1) {
+    const end = methodIdx !== -1 ? methodIdx : lines.length;
+    for (let i = ingIdx + 1; i < end; i++) {
+      const l = lines[i].replace(/^[•\-\*\u2022]\s*/, '');
+      if (!l) continue;
+      // Split leading amount from item
+      const am = l.match(/^([\d¼½¾⅓⅔⅛\/\.\s]+(?:g|kg|ml|l|oz|lb|cup|cups|tbsp|tsp|tablespoons?|teaspoons?|cloves?|each|pinch|bunch|can|cans)?\b)?\s*(.+)$/i);
+      if (am && am[2]) {
+        result.ingredients.push({ amount: (am[1]||'').trim(), item: am[2].trim() });
+      } else {
+        result.ingredients.push({ amount: '', item: l });
+      }
+    }
+  }
+
+  if (methodIdx !== -1) {
+    for (let i = methodIdx + 1; i < lines.length; i++) {
+      const l = lines[i].replace(/^\d+[\.\)]\s*/, '').replace(/^[•\-\*\u2022]\s*/, '');
+      if (!l) continue;
+      if (/^(notes?|chef'?s notes?|tips?)[:]?$/i.test(l)) {
+        result.notes = lines.slice(i + 1).join(' ');
+        break;
+      }
+      result.steps.push(l);
+    }
+  }
+
+  // If no structured sections found, dump everything into description for manual cleanup
+  if (ingIdx === -1 && methodIdx === -1) {
+    result.description = lines.slice(1).join('\n');
+  }
+
+  if (result.ingredients.length === 0) result.ingredients = [{ amount: '', item: '' }];
+  if (result.steps.length === 0) result.steps = [''];
+  return result;
+}
+
+function populateFormFromParsed(p) {
+  formImage = p.image || null;
+  formIngredients = p.ingredients.length ? p.ingredients : [{ amount: '', item: '' }];
+  formSteps = p.steps.length ? p.steps : [''];
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  set('f-title', p.title);
+  set('f-category', p.category);
+  set('f-servings', p.servings);
+  set('f-preptime', p.prepTime);
+  set('f-cooktime', p.cookTime);
+  set('f-desc', p.description);
+  set('f-notes', p.notes);
+  renderIngEditor();
+  renderStepsEditor();
+  refreshImagePreview();
+}
+
+// ── REFRESH FROM CLOUD ──
+// Pull latest recipes from Supabase, update the in-memory list, the on-screen
+// view, and the local cache (so they're available offline next time).
+async function refreshFromCloud() {
+  if (!cloudMode || !isOnline) return;
+  try {
+    setSync('syncing');
+    const cloud = await cloudFetchAll();
+    recipes = cloud;
+    await saveRecipes(recipes); // mirror into local cache
+    renderIndex();
+    setSync();
+  } catch (e) {
+    console.error('Cloud refresh failed, using cached copy', e);
+    setSync();
+  }
+}
+
+// ── INIT ──
+async function init() {
+  // 1. Local cache first — instant display, works with no internet.
+  try {
+    await openDB();
+    recipes = await dbGetAll();
+  } catch (e) {
+    console.error('Local cache failed:', e);
+    recipes = [];
+  }
+
+  // 2. Set up cloud if keys are present.
+  const hasCloud = initCloud();
+
+  if (!hasCloud) {
+    // Offline-only mode: behave exactly like the non-cloud version.
+    if (recipes.length === 0) { recipes = SEED_RECIPES; await saveRecipes(recipes); }
+    updateAuthUI();
+    setSync();
+    renderIndex();
+    return;
+  }
+
+  // 3. Cloud mode: render cached copy immediately, then sync.
+  updateAuthUI();
+  setSync();
+  renderIndex();
+
+  // Restore an existing session if the chef was already signed in.
+  try {
+    const { data } = await supa.auth.getSession();
+    if (data && data.session) currentUser = data.session.user;
+  } catch {}
+  updateAuthUI();
+
+  // Pull fresh data and push any queued offline edits.
+  if (isOnline) {
+    await flushPending();
+    await refreshFromCloud();
+  }
+  setSync();
+}
+init();
+</script>
+</body>
+</html>
