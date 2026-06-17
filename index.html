@@ -42,22 +42,26 @@
   }
 
   html, body {
-    height: 100%;
+    min-height: 100%;
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', sans-serif;
   }
-  body { overflow: hidden; }
+  body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 
   /* ── SCREENS ── */
   .screen {
     display: none;
-    height: 100vh;        /* fallback for older browsers */
-    height: 100dvh;       /* dynamic viewport height — accounts for iOS toolbars */
+    min-height: 100vh;
+    min-height: 100dvh;
     flex-direction: column;
-    min-height: 0;
   }
   .screen.active { display: flex; }
+  /* Present mode stays locked to the viewport; everything else scrolls the page */
+  #slideshow-screen.active { height: 100dvh; overflow: hidden; }
 
   /* ── NAV BAR ── */
   .nav {
@@ -68,6 +72,9 @@
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 50;
   }
   .nav-title {
     font-family: 'Playfair Display', serif;
@@ -140,10 +147,7 @@
   .tag-btn.active { background: var(--gold); color: #f3efe6; border-color: var(--gold); font-weight: 500; }
 
   .recipe-grid {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    flex: 1 0 auto;
     padding: 20px 24px;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -224,10 +228,7 @@
   #detail-screen { }
 
   .detail-body {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    flex: 1 0 auto;
     padding: 28px 32px;
   }
   .detail-body::-webkit-scrollbar { width: 4px; }
@@ -341,10 +342,7 @@
   #admin-screen { }
 
   .admin-body {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    flex: 1 0 auto;
     padding: 28px 32px;
     max-width: 720px;
     width: 100%;
@@ -1893,14 +1891,56 @@ async function extractDishImage(pdf) {
     try {
       const out = imageObjToCanvas(best);
       if (out) {
-        // Cap width so the stored data URL stays a reasonable size.
-        return downscaleCanvas(out, 1000).toDataURL('image/jpeg', 0.85);
+        // Crop any uniform white margins baked into the source image,
+        // then cap width so the stored data URL stays a reasonable size.
+        const trimmed = trimWhiteBorders(out);
+        return downscaleCanvas(trimmed, 1000).toDataURL('image/jpeg', 0.85);
       }
     } catch (e) { /* fall through */ }
   }
 
   // Fallback: a downscaled render of the whole page.
   return downscaleCanvas(canvas, 800).toDataURL('image/jpeg', 0.82);
+}
+
+// Detect and crop uniform near-white borders around a canvas. Recipe-sheet
+// photos are often centered in a white frame; this removes that frame so the
+// card/slideshow shows the dish edge-to-edge.
+function trimWhiteBorders(src) {
+  const w = src.width, h = src.height;
+  const cx = src.getContext('2d');
+  let data;
+  try { data = cx.getImageData(0, 0, w, h).data; }
+  catch (e) { return src; } // tainted canvas — skip trim
+  const THRESH = 238;       // pixels brighter than this count as "white"
+  const isWhiteRow = (y) => {
+    for (let x = 0; x < w; x += 4) {
+      const i = (y * w + x) * 4;
+      if (data[i] < THRESH || data[i+1] < THRESH || data[i+2] < THRESH) return false;
+    }
+    return true;
+  };
+  const isWhiteCol = (x) => {
+    for (let y = 0; y < h; y += 4) {
+      const i = (y * w + x) * 4;
+      if (data[i] < THRESH || data[i+1] < THRESH || data[i+2] < THRESH) return false;
+    }
+    return true;
+  };
+  let top = 0, bottom = h - 1, left = 0, right = w - 1;
+  while (top < bottom && isWhiteRow(top)) top++;
+  while (bottom > top && isWhiteRow(bottom)) bottom--;
+  while (left < right && isWhiteCol(left)) left++;
+  while (right > left && isWhiteCol(right)) right--;
+  const cropW = right - left + 1, cropH = bottom - top + 1;
+  // Only crop if it actually removed a meaningful border and leaves a sane image.
+  if (cropW < w * 0.5 && cropH < h * 0.5) return src; // too aggressive, bail
+  if (cropW >= w && cropH >= h) return src;            // nothing to trim
+  if (cropW < 50 || cropH < 50) return src;
+  const out = document.createElement('canvas');
+  out.width = cropW; out.height = cropH;
+  out.getContext('2d').drawImage(src, left, top, cropW, cropH, 0, 0, cropW, cropH);
+  return out;
 }
 
 // Convert a pdf.js image object (raw pixel data) into a canvas.
