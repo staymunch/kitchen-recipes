@@ -23,18 +23,18 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #1a1208;
-    --surface: #231a0c;
-    --surface2: #2e2212;
-    --border: rgba(255,220,140,0.12);
-    --gold: #e8c96a;
-    --gold-dim: #a8903a;
-    --cream: #f5ead8;
-    --muted: #7a6a50;
-    --text: #f0e2c8;
-    --red: #c0392b;
-    --green: #27ae60;
-    --radius: 14px;
+    --bg: #f3efe6;
+    --surface: #f3efe6;
+    --surface2: #e9e3d6;
+    --border: rgba(26,26,26,0.14);
+    --gold: #1a1a1a;
+    --gold-dim: #555047;
+    --cream: #1a1a1a;
+    --muted: #6b6458;
+    --text: #1a1a1a;
+    --red: #a8341f;
+    --green: #3a7d44;
+    --radius: 4px;
   }
 
   html, body {
@@ -78,8 +78,8 @@
     transition: all 0.15s;
   }
   .nav-btn:hover { border-color: var(--gold); color: var(--gold); }
-  .nav-btn.primary { background: var(--gold); color: #1a1208; border-color: var(--gold); font-weight: 600; }
-  .nav-btn.primary:hover { background: #f0d47a; }
+  .nav-btn.primary { background: var(--gold); color: #f3efe6; border-color: var(--gold); font-weight: 600; }
+  .nav-btn.primary:hover { background: #3a3a3a; }
 
   /* ── INDEX SCREEN ── */
   #index-screen { }
@@ -127,7 +127,7 @@
     font-family: 'Inter', sans-serif;
     transition: all 0.15s;
   }
-  .tag-btn.active { background: var(--gold); color: #1a1208; border-color: var(--gold); font-weight: 500; }
+  .tag-btn.active { background: var(--gold); color: #f3efe6; border-color: var(--gold); font-weight: 500; }
 
   .recipe-grid {
     flex: 1;
@@ -429,8 +429,8 @@
     transition: all 0.15s;
     border: none;
   }
-  .btn-primary { background: var(--gold); color: #1a1208; font-weight: 600; }
-  .btn-primary:hover { background: #f0d47a; }
+  .btn-primary { background: var(--gold); color: #f3efe6; font-weight: 600; }
+  .btn-primary:hover { background: #3a3a3a; }
   .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
   .btn-secondary:hover { border-color: var(--gold-dim); }
   .btn-danger { background: none; color: var(--red); border: 1px solid rgba(192,57,43,0.3); }
@@ -478,10 +478,10 @@
     bottom: 32px;
     left: 50%;
     transform: translateX(-50%) translateY(20px);
-    background: var(--green);
-    color: white;
+    background: #1a1a1a;
+    color: #f3efe6;
     padding: 12px 24px;
-    border-radius: 10px;
+    border-radius: 4px;
     font-size: 14px;
     font-weight: 500;
     opacity: 0;
@@ -493,7 +493,7 @@
 
   /* ── SLIDESHOW SCREEN ── */
   #slideshow-screen {
-    background: #0e0b05;
+    background: var(--bg);
   }
 
   .slide-nav {
@@ -501,7 +501,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 28px;
-    background: rgba(0,0,0,0.4);
+    background: var(--surface);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
@@ -516,7 +516,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     padding: 40px 60px;
     overflow-y: auto;
     position: relative;
@@ -599,8 +599,8 @@
   }
   .slide-prev-btn:hover, .slide-next-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
   .slide-prev-btn:disabled, .slide-next-btn:disabled { opacity: 0.3; cursor: default; }
-  .slide-next-btn { background: var(--gold); color: #1a1208; border-color: var(--gold); font-weight: 600; }
-  .slide-next-btn:hover { background: #f0d47a; }
+  .slide-next-btn { background: var(--gold); color: #f3efe6; border-color: var(--gold); font-weight: 600; }
+  .slide-next-btn:hover { background: #3a3a3a; }
   .slide-next-btn:disabled { background: var(--surface2); color: var(--muted); border-color: var(--border); }
 
   .slide-notes {
@@ -680,7 +680,7 @@
   .auth-btn {
     width: 100%;
     background: var(--gold);
-    color: #1a1208;
+    color: #f3efe6;
     border: none;
     border-radius: 10px;
     padding: 13px;
@@ -690,7 +690,7 @@
     cursor: pointer;
     transition: background 0.15s;
   }
-  .auth-btn:hover { background: #f0d47a; }
+  .auth-btn:hover { background: #3a3a3a; }
   .auth-btn:disabled { opacity: 0.5; cursor: default; }
 
   /* ── SYNC STATUS PILL ── */
@@ -708,7 +708,7 @@
   }
   .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
   .sync-dot.online { background: var(--green); }
-  .sync-dot.offline { background: #c0392b; }
+  .sync-dot.offline { background: var(--red); }
   .sync-dot.syncing { background: var(--gold); animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
@@ -716,7 +716,7 @@
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.75);
+    background: rgba(26,26,26,0.45);
     display: none;
     align-items: center;
     justify-content: center;
@@ -762,7 +762,7 @@
     transition: all 0.1s;
   }
   .pin-key:hover { border-color: var(--gold-dim); }
-  .pin-key:active { background: var(--gold); color: #1a1208; }
+  .pin-key:active { background: var(--gold); color: #f3efe6; }
   .pin-key.blank { background: none; border: none; cursor: default; }
   .pin-cancel {
     margin-top: 20px;
@@ -796,9 +796,11 @@
   }
   .slide-image {
     width: 100%;
-    height: 100%;
-    max-height: 60vh;
-    object-fit: cover;
+    height: auto;
+    max-height: 70vh;
+    object-fit: contain;
+    object-position: top;
+    align-self: start;
     border-radius: var(--radius);
     background: var(--surface2);
   }
@@ -903,7 +905,10 @@
 <!-- SLIDESHOW SCREEN -->
 <div id="slideshow-screen" class="screen">
   <div class="slide-nav">
-    <button class="slide-prev-btn" id="slide-prev" onclick="slidePrev()">← Prev</button>
+    <div style="display:flex;gap:10px">
+      <button class="slide-prev-btn" id="slide-home" onclick="showIndex()">⌂ Home</button>
+      <button class="slide-prev-btn" id="slide-prev" onclick="slidePrev()">← Prev</button>
+    </div>
     <div style="text-align:center">
       <div class="slide-title-nav" id="slide-nav-title"></div>
       <div class="slide-dots" id="slide-dots"></div>
@@ -1374,13 +1379,13 @@ function renderIndex() {
     card.className = 'recipe-card';
     card.innerHTML = `
       ${r.image ? `<img class="card-image" src="${r.image}" alt="${escAttr(r.title)}" />` : ''}
-      <div class="card-category">${r.category || 'Uncategorized'}</div>
-      <div class="card-title">${r.title}</div>
-      <div class="card-desc">${r.description || ''}</div>
+      <div class="card-category">${escHtml(r.category || 'Uncategorized')}</div>
+      <div class="card-title">${escHtml(r.title)}</div>
+      <div class="card-desc">${escHtml(r.description || '')}</div>
       <div class="card-meta">
-        ${r.servings ? `<span>👥 ${r.servings} servings</span>` : ''}
-        ${r.prepTime ? `<span>⏱ Prep ${r.prepTime}</span>` : ''}
-        ${r.cookTime ? `<span>🔥 Cook ${r.cookTime}</span>` : ''}
+        ${r.servings ? `<span>👥 ${escHtml(r.servings)} servings</span>` : ''}
+        ${r.prepTime ? `<span>⏱ Prep ${escHtml(r.prepTime)}</span>` : ''}
+        ${r.cookTime ? `<span>🔥 Cook ${escHtml(r.cookTime)}</span>` : ''}
       </div>`;
     card.onclick = () => showDetail(r.id);
     grid.appendChild(card);
@@ -1395,26 +1400,26 @@ function showDetail(id) {
   document.getElementById('detail-nav-title').textContent = r.title;
   const body = document.getElementById('detail-body');
   body.innerHTML = `
-    <div class="detail-category">${r.category || 'Uncategorized'}</div>
-    <div class="detail-title">${r.title}</div>
+    <div class="detail-category">${escHtml(r.category || 'Uncategorized')}</div>
+    <div class="detail-title">${escHtml(r.title)}</div>
     ${r.image ? `<img class="detail-image" src="${r.image}" alt="${escAttr(r.title)}" />` : ''}
-    ${r.description ? `<div class="detail-desc">${r.description}</div>` : ''}
+    ${r.description ? `<div class="detail-desc">${escHtml(r.description)}</div>` : ''}
     <div class="detail-meta-row">
-      ${r.servings ? `<div class="meta-chip"><strong>Servings</strong>${r.servings}</div>` : ''}
-      ${r.prepTime ? `<div class="meta-chip"><strong>Prep Time</strong>${r.prepTime}</div>` : ''}
-      ${r.cookTime ? `<div class="meta-chip"><strong>Cook Time</strong>${r.cookTime}</div>` : ''}
+      ${r.servings ? `<div class="meta-chip"><strong>Servings</strong>${escHtml(r.servings)}</div>` : ''}
+      ${r.prepTime ? `<div class="meta-chip"><strong>Prep Time</strong>${escHtml(r.prepTime)}</div>` : ''}
+      ${r.cookTime ? `<div class="meta-chip"><strong>Cook Time</strong>${escHtml(r.cookTime)}</div>` : ''}
     </div>
     <hr class="detail-divider" />
     <div class="section-label">Ingredients</div>
     <ul class="ingredients-list">
-      ${(r.ingredients||[]).map(ing => `<li><span class="ing-amount">${ing.amount}</span><span>${ing.item}</span></li>`).join('')}
+      ${(r.ingredients||[]).map(ing => `<li><span class="ing-amount">${escHtml(ing.amount)}</span><span>${escHtml(ing.item)}</span></li>`).join('')}
     </ul>
     <hr class="detail-divider" />
     <div class="section-label">Method</div>
     <ol class="steps-list">
-      ${(r.steps||[]).map((s,i) => `<div class="step"><div class="step-num">${i+1}</div><div class="step-text">${s}</div></div>`).join('')}
+      ${(r.steps||[]).map((s,i) => `<div class="step"><div class="step-num">${i+1}</div><div class="step-text">${escHtml(s)}</div></div>`).join('')}
     </ol>
-    ${r.notes ? `<div class="notes-box"><strong>Chef's Notes</strong>${r.notes}</div>` : ''}
+    ${r.notes ? `<div class="notes-box"><strong>Chef's Notes</strong>${escHtml(r.notes)}</div>` : ''}
   `;
   showScreen('detail-screen');
 }
@@ -1442,15 +1447,15 @@ function renderSlidePage(page) {
 
   if (page.type === 'title') {
     body.innerHTML = `
-      <div style="display:grid;grid-template-columns:${r.image ? '1.3fr 1fr' : '1fr'};gap:40px;align-items:center">
+      <div style="display:grid;grid-template-columns:${r.image ? '1.3fr 1fr' : '1fr'};gap:40px;align-items:start">
         <div>
-          <div class="slide-category">${r.category || 'Uncategorized'}</div>
-          <div class="slide-main-title">${r.title}</div>
-          ${r.description ? `<div class="slide-desc">${r.description}</div>` : ''}
+          <div class="slide-category">${escHtml(r.category || 'Uncategorized')}</div>
+          <div class="slide-main-title">${escHtml(r.title)}</div>
+          ${r.description ? `<div class="slide-desc">${escHtml(r.description)}</div>` : ''}
           <div class="detail-meta-row">
-            ${r.servings ? `<div class="meta-chip"><strong>Servings</strong>${r.servings}</div>` : ''}
-            ${r.prepTime ? `<div class="meta-chip"><strong>Prep Time</strong>${r.prepTime}</div>` : ''}
-            ${r.cookTime ? `<div class="meta-chip"><strong>Cook Time</strong>${r.cookTime}</div>` : ''}
+            ${r.servings ? `<div class="meta-chip"><strong>Servings</strong>${escHtml(r.servings)}</div>` : ''}
+            ${r.prepTime ? `<div class="meta-chip"><strong>Prep Time</strong>${escHtml(r.prepTime)}</div>` : ''}
+            ${r.cookTime ? `<div class="meta-chip"><strong>Cook Time</strong>${escHtml(r.cookTime)}</div>` : ''}
           </div>
         </div>
         ${r.image ? `<img class="slide-image" src="${r.image}" alt="${escAttr(r.title)}" />` : ''}
@@ -1460,20 +1465,20 @@ function renderSlidePage(page) {
     body.innerHTML = `
       <div class="section-label" style="margin-bottom:20px">Ingredients</div>
       <ul class="slide-ing-list">
-        ${(r.ingredients||[]).map(ing => `<li><span class="slide-ing-amount">${ing.amount}</span><span>${ing.item}</span></li>`).join('')}
+        ${(r.ingredients||[]).map(ing => `<li><span class="slide-ing-amount">${escHtml(ing.amount)}</span><span>${escHtml(ing.item)}</span></li>`).join('')}
       </ul>
     `;
   } else if (page.type === 'steps') {
     body.innerHTML = `
       <div class="section-label" style="margin-bottom:20px">Method${slidePages.filter(p=>p.type==='steps').length > 1 ? ` (${Math.floor(page.startIndex/4)+1})` : ''}</div>
       <ol class="slide-steps-list">
-        ${page.steps.map((s,i) => `<div class="slide-step"><div class="slide-step-num">${page.startIndex+i+1}</div><div class="slide-step-text">${s}</div></div>`).join('')}
+        ${page.steps.map((s,i) => `<div class="slide-step"><div class="slide-step-num">${page.startIndex+i+1}</div><div class="slide-step-text">${escHtml(s)}</div></div>`).join('')}
       </ol>
     `;
   } else if (page.type === 'notes') {
     body.innerHTML = `
       <div class="section-label" style="margin-bottom:20px">Chef's Notes</div>
-      <div class="slide-notes"><strong>Remember</strong>${r.notes}</div>
+      <div class="slide-notes"><strong>Remember</strong>${escHtml(r.notes)}</div>
     `;
   }
 
@@ -1484,13 +1489,10 @@ function renderSlidePage(page) {
   // Update buttons
   document.getElementById('slide-prev').disabled = slideIndex === 0;
   const nextBtn = document.getElementById('slide-next');
-  nextBtn.disabled = slideIndex === slidePages.length - 1;
-  nextBtn.textContent = slideIndex === slidePages.length - 1 ? 'Done ✓' : 'Next →';
-  if (slideIndex === slidePages.length - 1) {
-    nextBtn.onclick = () => showDetail(currentRecipeId);
-  } else {
-    nextBtn.onclick = slideNext;
-  }
+  const isLast = slideIndex === slidePages.length - 1;
+  nextBtn.disabled = false; // always clickable: advances, or finishes on the last slide
+  nextBtn.textContent = isLast ? 'Done ✓' : 'Next →';
+  nextBtn.onclick = isLast ? () => showDetail(currentRecipeId) : slideNext;
 }
 
 function startSlideshow() {
@@ -1540,8 +1542,8 @@ function renderAdmin() {
       ${recipes.map(r => `
         <li class="recipe-list-item">
           <div class="rli-info">
-            <div class="rli-title">${r.title}</div>
-            <div class="rli-cat">${r.category || 'Uncategorized'}</div>
+            <div class="rli-title">${escHtml(r.title)}</div>
+            <div class="rli-cat">${escHtml(r.category || 'Uncategorized')}</div>
           </div>
           <div class="rli-actions">
             <button class="icon-btn" onclick="editRecipe('${r.id}')">Edit</button>
@@ -1625,7 +1627,7 @@ function showAddForm(id) {
   renderStepsEditor();
 }
 
-function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escAttr(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
 function clearFormImage() {
